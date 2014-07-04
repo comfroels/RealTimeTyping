@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  	<style>
+		.convo{
+			border:1px solid black;
+			padding:5px;
+			text-align: center;
+			width:200px;
+			display: inline-block;
+		}
+		.message {
+			width:140px;
+			overflow: auto;
+			height:100px;
+		}
+  	</style>
+  	<script>
+  		  	
+  	$(document).ready(function(){
+  		//get name
+  		name = prompt('What is your name?');
+  		io = io.connect();
+  		io.emit('got_a_new_user',{new_name:name});
+  		//add new user
+  		io.on('new_user',function(stuff){
+  			$('.stuff').append('<div class="convo"><label>'+stuff.name+'</label><br><div class="message" id="'+stuff.id+'"></div></div>');
+  		});
+  		//if the user is new, get all others
+		io.on('existing_users',function(stuff){
+  			for (var i = 0; i < stuff.arr.length - 1; i++){
+  				$('.stuff').append('<div class="convo"><label>'+stuff.arr[i].name+'</label><br><div class="message" id="'+stuff.arr[i].id+'"></div></div>');	
+  			}
+  			$('.stuff').append('<div class="convo"><label>'+stuff.arr[stuff.arr.length-1].name+'</label><br><textarea id="'+stuff.arr[stuff.arr.length-1].id+'"></textarea></div>');
+  		});
+		//delete disconnected user
+		io.on('disconnected_user',function(stuff){
+			$("#"+stuff.id).parent().remove();
+		});
+		//listen for new message
+		io.on('new_message',function(stuff){
+			$("#"+stuff.id).html('<p>'+stuff.message+'</p>');
+		});
+
+  	});
+
+  	$(document).on('keyup','textarea',function(){
+  		var msg = $('textarea').val();
+  		io.emit('message_update',{message:msg});
+  	});
+
+  	</script>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <div class="stuff">
+    </div>
+  </body>
+</html>
